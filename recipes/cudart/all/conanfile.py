@@ -16,6 +16,7 @@ class CudaRtConan(ConanFile):
 
     def requirements(self):
         cudart = {
+            "12.3.101": "12.3.103",
             "12.0.107": "12.0.76"
         }
         self.requires(f"nvcc/{cudart.get(self.version, self.version)}", run=True, libs=True, headers=True)
