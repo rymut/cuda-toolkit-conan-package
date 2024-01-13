@@ -2,6 +2,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+__global__ void kernel(int *a, int *b) {
+    a[threadIdx.x] = b[threadIdx.x];
+}
 int main(void)
 {
     int devs = 0;

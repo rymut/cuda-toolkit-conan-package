@@ -1,8 +1,7 @@
-import os
-
 from conan import ConanFile
 from conan.tools.cmake import CMake, cmake_layout
 from conan.tools.build import can_run
+from os.path import join
 
 class TestPackageConan(ConanFile):
     settings = "os", "compiler", "build_type", "arch"
@@ -21,5 +20,7 @@ class TestPackageConan(ConanFile):
 
     def test(self):
         if can_run(self):
-            cmd = os.path.join(self.cpp.build.bindir, "test_package")
+            cmd = join(self.cpp.build.bindir, "test_package")
+            self.run(cmd, env="conanrun")
+            cmd = join(self.cpp.build.bindir, "test_package_static")
             self.run(cmd, env="conanrun")

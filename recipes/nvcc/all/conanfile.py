@@ -38,6 +38,11 @@ class NvccConan(ConanFile):
                 chmod(license_path, 0o666)
         # nvcc package
         nvvm_root = join(self.build_folder, "nvvm")
+        if exists(join(self.build_folder, "lib", "x64")):
+            copy(self, "*", join(self.build_folder, "lib", "x64"), join(self.build_folder, "lib"))
+            rmdir(self, join(self.build_folder, "lib", "x64"))
+        if exists(join(self.build_folder, "lib64")):
+            rename(self, join(self.build_folder, "lib64"), join(self.build_folder, "lib"))
         if exists(join(nvvm_root, "lib", "x64")):
             copy(self, "*", join(nvvm_root, "lib", "x64"), join(nvvm_root, "lib"))
             rmdir(self, join(nvvm_root, "lib", "x64"))
@@ -104,6 +109,7 @@ class NvccConan(ConanFile):
         # cudart libraries
         self.cpp_info.components["cudart"].set_property("cmake_target_aliases", ["CUDA::cudart"])
         self.cpp_info.components["cudart"].libs = ["cudart"]
+        self.cpp_info.components["cudart"].includedirs = ["include"]
         if self.settings.os in ["Linux"]:
             self.cpp_info.components["cudart"].system_libs = ["dl"]
 
@@ -118,6 +124,7 @@ class NvccConan(ConanFile):
         self.cpp_info.components["cudart_static"].set_property("cmake_target_aliases", ["CUDA::cudart_static"])
         self.cpp_info.components["cudart_static"].libs = ["cudart_static"]
         self.cpp_info.components["cudart_static"].requires = ["cudart_static_deps"]
+        self.cpp_info.components["cudart_static"].includedirs = ["include"]
 
         self.cpp_info.components["cuda_driver"].set_property("cmake_target_aliases", ["CUDA::cuda_driver", "CUDA::cuda"])
         if not self._is_windows:
@@ -127,8 +134,8 @@ class NvccConan(ConanFile):
         self.cpp_info.components["cudadevrt"].set_property("cmake_target_aliases", ["CUDA::cudadevrt"])
         self.cpp_info.components["cudadevrt"].libs = ["cudadevrt"]
 
+        self.cpp_info.components["culibos"].set_property("cmake_target_aliases", ["CUDA::culibos"])
         if not self._is_windows:
-            self.cpp_info.components["culibos"].set_property("cmake_target_aliases", ["CUDA::culibos"])
             self.cpp_info.components["culibos"].libs = ["culibos"]
 
         # nvcc libraries

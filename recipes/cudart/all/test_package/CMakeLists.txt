@@ -6,3 +6,6 @@ find_package(cudart REQUIRED)
 
 add_executable(${PROJECT_NAME} test_package.cpp)
 target_link_libraries(${PROJECT_NAME} PRIVATE cudart::cudart)
+
+add_executable(${PROJECT_NAME}_static test_package.cpp)
+target_link_libraries(${PROJECT_NAME}_static PRIVATE nvcc::cudart_static)
