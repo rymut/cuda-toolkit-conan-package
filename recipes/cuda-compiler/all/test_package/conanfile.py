@@ -9,9 +9,11 @@ class TestPackageConan(ConanFile):
     generators = "CMakeDeps", "CMakeToolchain"
 
     def requirements(self):
-        match = re.compile(r"^[^\/]+\/([^\.@]*\.[^\.@]*)").match(self.tested_reference_str)
+        self.requires(self.tested_reference_str)
+        pass
+
+    def build_requirements(self):
         self.tool_requires(self.tested_reference_str)
-        self.requires(f"cudart/[>={match.group(1)}]")
 
     def build(self):
         cmake = CMake(self)

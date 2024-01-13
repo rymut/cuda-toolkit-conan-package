@@ -9,28 +9,49 @@ required_conan_version = ">=1.47.0"
 
 class CudaCompilerConan(ConanFile):
     name = "cuda-compiler"
-    description = "NVIDIA CUDA compiler"
+    description = "NVIDIA CUDA Compiler"
     url = "https://github.com/rymut/conan-center-index"
     homepage = "https://developer.nvidia.com/cuda-downloads"
     license = "Nvidia CUDA Toolkit EULA"
     topics = ("cuda", "nvidia", "compiler")
     settings = "os", "arch"
-    options = {}
-    default_options = {}
+    package_type = "unknown"
+    options = {
+        "with_cuobjdump": [True, False],
+        "with_nvcc": [True, False],
+        "with_cxxfilt": [True, False],
+        "with_nvprune": [True, False],
+    }
+    default_options = {
+        "with_cuobjdump": False,
+        "with_nvcc": True,
+        "with_cxxfilt": False,
+        "with_nvprune": False,
+    }
     no_copy_source = True
 
     def requirements(self):
-        self.requires(f"nvcc/{self.version}", build=False, run=True, visible=True)
-        self.requires(f"cudart/{self.version}", libs=True, build=False, run=True, visible=True)
-
+        nvcc = { 
+            "12.3.1": "12.3.103",
+            "11.6.0": "11.6.55",
+        }
+        cudart = {
+            "12.3.1": "12.3.101",
+            "11.6.0": "11.6.55",            
+        }
+        if self.options.with_nvcc:
+            self.requires(f"nvcc/{nvcc.get(self.version, self.version)}", headers=True, libs=True, build=False, run=True, visible=True)
+            self.requires(f"cudart/{cudart.get(self.version, self.version)}", headers=True, libs=True, run=True, visible=True)
 
     def package_info(self):
-        nvcc_root = self.dependencies['nvcc'].package_folder        
-        self.conf_info.append("tools.cmake.cmaketoolchain:user_toolchain", join(nvcc_root, "nvcc_toolchain.cmake"))
-        if self.settings.os == "Windows":
-            self.conf_info.update("tools.build:compiler_executables", { "cuda": join(nvcc_root, "bin", "nvcc.exe") })
-            self.conf_info.define("tools.cmake.cmaketoolchain:toolset_arch", f"x64,cuda={nvcc_root.replace(os.sep, '/')}")
-            self.runenv_info.prepend_path("PATH", join(self.package_folder, "bin"))
-        else:
-            self.conf_info.update("tools.build:compiler_executables", { "cuda": join(nvcc_root, "bin", "nvcc") })
-            self.runenv_info.prepend_path("PATH", join(self.package_folder, "lib"))
+        nvcc = self.dependencies["nvcc"]
+        for item in nvcc.conf_info.items():
+            name, value = item
+            if isinstance(value, list):
+                for val in value:
+                    self.conf_info.append(name, val)
+                pass
+            elif isinstance(value, dict):
+                self.conf_info.update(name, value)
+            elif isinstance(value, str):
+                self.conf_info.define(name, value)
