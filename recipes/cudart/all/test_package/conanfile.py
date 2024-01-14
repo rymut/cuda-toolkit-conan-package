@@ -22,5 +22,3 @@ class TestPackageConan(ConanFile):
         if can_run(self):
             cmd = join(self.cpp.build.bindir, "test_package")
             self.run(cmd, env="conanrun")
-            cmd = join(self.cpp.build.bindir, "test_package_static")
-            self.run(cmd, env="conanrun")

@@ -14,7 +14,7 @@ class NvccConan(ConanFile):
     url = "https://github.com/conan-io/conan-center-index"
     homepage = "https://developer.nvidia.com/cuda-downloads"
     license = "Nvidia CUDA Toolkit EULA"
-    topics = ("nvcc", "compiler", "cuda", "nvidia")
+    topics = ("nvcc", "compiler", "cuda", "nvidia", "pre-build")
     exports_sources = ["nvcc_toolchain.cmake"]
     package_type = "application"
     settings = "os", "arch", "compiler", "build_type"
