@@ -37,6 +37,8 @@ class NvccConan(ConanFile):
             if exists(license_path):
                 chmod(license_path, 0o666)
         # nvcc package
+        if exists(join(self.build_folder, "bin", "crt")):
+            rmdir(self, join(self.build_folder, "bin", "crt"))
         nvvm_root = join(self.build_folder, "nvvm")
         if exists(join(self.build_folder, "lib", "x64")):
             copy(self, "*", join(self.build_folder, "lib", "x64"), join(self.build_folder, "lib"))
@@ -57,6 +59,8 @@ class NvccConan(ConanFile):
         nvcc_profile_path = join(self.build_folder, "bin", "nvcc.profile")
         if self._is_windows:
             replace_in_file(self, nvcc_profile_path, "$(_WIN_PLATFORM_)", "")
+            replace_in_file(self, nvcc_profile_path, "\"-I$(TOP)", "-Itest \"-I$(nvcrt_PATH)/include\" \"-I$(cudart_PATH)/include\" \"-I$(TOP)")
+            replace_in_file(self, nvcc_profile_path, "\"/LIBPATH:", "\"/LIBPATH:$(cudart_PATH)/lib\" \"/LIBPATH:")
             major, minor = match(r"(\d+)\.(\d+)", self.version).groups()
             props_path = join(self.build_folder, "visual_studio_integration", "MSBuildExtensions", f"CUDA {major}.{minor}.props")
             replace_in_file(self, props_path,
@@ -68,6 +72,12 @@ class NvccConan(ConanFile):
                 r'''<CudaToolkitLibDir Condition="'$(CudaToolkitLibDir)' == ''">$(CudaToolkitDir)lib64</CudaToolkitLibDir>''',
                 r'''<CudaToolkitLibDir Condition="'$(CudaToolkitLibDir)' == '' AND Exists('$(CudaToolkitDir)lib64')">$(CudaToolkitDir)lib64</CudaToolkitLibDir>'''
                 r'''<CudaToolkitLibDir Condition="'$(CudaToolkitLibDir)' == ''">$(CudaToolkitDir)lib</CudaToolkitLibDir>''')
+            replace_in_file(self, props_path,
+                r'''<AdditionalLibraryDirectories>$(CudaToolkitBinDir)/crt</AdditionalLibraryDirectories>''',
+                r'''<AdditionalLibraryDirectories>$(nvcrt_PATH)/lib/crt</AdditionalLibraryDirectories>''')
+            replace_in_file(self, props_path,
+                r'''<AdditionalLibraryDirectories>%(AdditionalLibraryDirectories);$(CudaToolkitLibDir)</AdditionalLibraryDirectories>''',
+                r'''<AdditionalLibraryDirectories>%(AdditionalLibraryDirectories);$(cudart_PATH)\\lib;$(CudaToolkitLibDir)</AdditionalLibraryDirectories>''')
         else:
             replace_in_file(self, nvcc_profile_path, "$(_TARGET_SIZE_)", "")
 
@@ -79,13 +89,16 @@ class NvccConan(ConanFile):
         copy(self, "*", join(self.build_folder, "nvvm", "lib"), join(self.package_folder, "lib"))
         copy(self, "*", join(self.build_folder, "nvvm", "libdevice"), join(self.package_folder, "lib"))
         dirs = ["bin", "include"]
+        copy(self, "*", join(self.build_folder, "bin"), join(self.package_folder, "bin"))
         for name in dirs:
             if exists(join(self.build_folder, name)):
-                copy(self, "*", join(self.build_folder, name), join(self.package_folder, name))
                 copy(self, "*", join(self.build_folder, "nvvm", name), join(self.package_folder, name))
         if exists(join(self.build_folder, "visual_studio_integration")):
             copy(self, "*", join(self.build_folder, "visual_studio_integration"), join(self.package_folder, "res", "CUDAVisualStudioIntegration", "extras", "visual_studio_integration"))
         symlinks.absolute_to_relative_symlinks(self, self.package_folder)
+
+    def requirements(self):
+        self.requires(f"cudart/{self.version}", visible=True)
 
     @property
     def _is_windows(self):
@@ -105,44 +118,6 @@ class NvccConan(ConanFile):
         self.cpp_info.components["nvvm"].libs = ["nvvm"]
         if self.settings.os in ["Linux"]:
             self.cpp_info.components["nvvm"].system_libs = ["dl", "m"]
-
-        # cudart libraries
-        self.cpp_info.components["cudart"].set_property("cmake_target_aliases", ["CUDA::cudart"])
-        self.cpp_info.components["cudart"].libs = ["cudart"]
-        self.cpp_info.components["cudart"].includedirs = ["include"]
-        if self.settings.os in ["Linux"]:
-            self.cpp_info.components["cudart"].system_libs = ["dl"]
-
-        self.cpp_info.components["cudart_static_deps"].set_property("cmake_target_aliases", ["CUDA::cudart_static_deps"])
-        self.cpp_info.components["cudart_static_deps"].libdirs = []
-        self.cpp_info.components["cudart_static_deps"].bindirs = []
-        self.cpp_info.components["cudart_static_deps"].libs = []
-
-        # unix system_libs
-        if self.settings.os in ["Linux"]:
-            self.cpp_info.components["cudart_static_deps"].system_libs = ["pthread", "rt"]
-        self.cpp_info.components["cudart_static"].set_property("cmake_target_aliases", ["CUDA::cudart_static"])
-        self.cpp_info.components["cudart_static"].libs = ["cudart_static"]
-        self.cpp_info.components["cudart_static"].requires = ["cudart_static_deps"]
-        self.cpp_info.components["cudart_static"].includedirs = ["include"]
-
-        self.cpp_info.components["cuda_driver"].set_property("cmake_target_aliases", ["CUDA::cuda_driver", "CUDA::cuda"])
-        if not self._is_windows:
-            self.cpp_info.components["cuda_driver"].libdirs = ["lib/stubs"]
-        self.cpp_info.components["cuda_driver"].libs = ["cuda"]
-
-        self.cpp_info.components["cudadevrt"].set_property("cmake_target_aliases", ["CUDA::cudadevrt"])
-        self.cpp_info.components["cudadevrt"].libs = ["cudadevrt"]
-
-        self.cpp_info.components["culibos"].set_property("cmake_target_aliases", ["CUDA::culibos"])
-        if not self._is_windows:
-            self.cpp_info.components["culibos"].libs = ["culibos"]
-
-        # nvcc libraries
-        if self.version >= Version("11.1"):
-            self.cpp_info.components["nvptxcompiler_static"].set_property("cmake_target_aliases", ["CUDA::nvptxcompiler_static"])
-            self.cpp_info.components["nvptxcompiler_static"].libs = ["nvptxcompiler_static"]
-            self.cpp_info.components["nvptxcompiler_static"].requires = ["cudart_static_deps"]
 
         # toolchain
         run_extension = ".exe" if self._is_windows else ""
