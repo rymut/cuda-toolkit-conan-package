@@ -37,8 +37,6 @@ class NvccConan(ConanFile):
             if exists(license_path):
                 chmod(license_path, 0o666)
         # nvcc package
-        if exists(join(self.build_folder, "bin", "crt")):
-            rmdir(self, join(self.build_folder, "bin", "crt"))
         nvvm_root = join(self.build_folder, "nvvm")
         if exists(join(self.build_folder, "lib", "x64")):
             copy(self, "*", join(self.build_folder, "lib", "x64"), join(self.build_folder, "lib"))
@@ -80,6 +78,8 @@ class NvccConan(ConanFile):
                 r'''<AdditionalLibraryDirectories>%(AdditionalLibraryDirectories);$(cudart_PATH)\\lib;$(CudaToolkitLibDir)</AdditionalLibraryDirectories>''')
         else:
             replace_in_file(self, nvcc_profile_path, "$(_TARGET_SIZE_)", "")
+            replace_in_file(self, nvcc_profile_path, "\"-I$(TOP)/$(_TARGET_DIR_)/include\"", "-Itest \"-I$(nvcrt_PATH)/include\" \"-I$(cudart_PATH)/include\"")
+            replace_in_file(self, nvcc_profile_path, "\"-L$(TOP)/$(_TARGET_DIR_)/lib/stubs\"", "\"-L$(TOP)/$(_TARGET_DIR_)/lib/stubs\" \"-L$(nvcrt_PATH)/lib/strubs\" \"-L$(cudart_PATH)/lib\"")
 
     def package(self):
         copy(self, "nvcc_toolchain.cmake", self.export_sources_folder, join(self.package_folder, "res"))

@@ -30,7 +30,6 @@ class NvCrtConan(ConanFile):
     def package(self):
         copy(self, "LICENSE", self.build_folder, join(self.package_folder, "licenses"))
         copy(self, "*", join(self.build_folder, "include"), join(self.package_folder, "include"))
-        copy(self, "*", join(self.build_folder, "bin", "crt"), join(self.package_folder, "lib", "crt"))
 
     def package_id(self):
         del self.info.settings.compiler
@@ -38,6 +37,7 @@ class NvCrtConan(ConanFile):
 
     def package_info(self):
         self.cpp_info.bindirs = []
-        self.cpp_info.libdirs = ["lib", join("lib", "crt")]
+        self.cpp_info.libdirs = []
+        self.cpp_info.resdirs = []
         self.buildenv_info.define("nvcrt_PATH", self.package_folder)
 

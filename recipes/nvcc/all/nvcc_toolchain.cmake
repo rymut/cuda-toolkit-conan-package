@@ -239,6 +239,7 @@ function(_cudatoolkit_toolchain package_path)
   _cudatoolkit_toolchain_split_version(cudatoolkit_version_major cudatoolkit_version_minor cudatoolkit_version_patch "${cudatoolkit_version}")
 
   if (MSVC)
+    message(FATAL_ERROR "IS THIS REQUIRED OR EVEN WORKING")
     _cudatoolkit_toolchain_version_msbuild(vs_platform_toolset_cuda "${package_path}${int_dir}/extras/visual_studio_integration/MSBuildExtensions")
     if (NOT vs_platform_toolset_cuda)
         set(vs_platform_toolset_cuda "${cudatoolkit_version}")
