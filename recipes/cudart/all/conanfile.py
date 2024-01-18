@@ -1,6 +1,7 @@
 from conan import ConanFile
 from conan.tools.files import get, symlinks, copy, replace_in_file, rename, rm, rmdir
 from os.path import join, exists
+import shutil
 
 required_conan_version = ">=1.47.0"
 
@@ -9,7 +10,7 @@ class CudaRtConan(ConanFile):
     description = "NVIDIA CUDA Runtime"
     url = "https://github.com/rymut/conan-center-index"
     homepage = "https://developer.nvidia.com/cuda-downloads"
-    license = "Nvidia CUDA Toolkit EULA"
+    license = ["Nvidia CUDA Toolkit EULA"]
     topics = ("cuda", "nvidia", "runtime", "cudart", "pre-build")
     settings = "os", "arch"
     options = {
@@ -33,6 +34,27 @@ class CudaRtConan(ConanFile):
         if self._is_windows:
             copy(self, "*.dll", join(self.build_folder, "lib"), join(self.build_folder, "bin"))
             rm(self, "*.dll", join(self.build_folder, "lib"))
+        if exists(join(self.build_folder, "include", "cooperative_groups")):
+            rmdir(self, join(self.build_folder, "include", "cooperative_groups"))
+        headers_crt = ["cuda_bf*", "cuda_fp*", "mma.h*", "cooperative_groups*", "*_awbarrier_*", "*_pipeline_*", "*Profiler*", "nvfunctional"]
+        headers_driver = ["cuda.h", "cuC*", "cudaD3*", "cudaGL*", "cudaType*"]
+        for headers in headers_crt + headers_driver:
+            rm(self, headers, join(self.build_folder, "include"))
+        if self.options.shared:
+            rm(self, "*cudart_static.*", join(self.build_folder, "lib"))
+            if self._is_windows:
+                shutil.copy(join(self.build_folder, "lib", "cudart.lib"), join(self.build_folder, "lib", "cudart_static.lib"))
+            else:
+                os.symlink(join(self.build_folder, "lib", "libcudart.so"), join(self.build_folder, "lib", "libcudart_static.so"))
+                absolute_to_relative_symlinks(self, join(self.build_folder, "lib"))
+        else:
+            rmdir(self, join(self.build_folder, "bin"))
+            rm(self, "*cudart.*", join(self.build_folder, "lib"))
+            if self._is_windows:
+                shutil.copy(join(self.build_folder, "lib", "cudart_static.lib"), join(self.build_folder, "lib", "cudart.lib"))
+            else:
+                os.symlink(join(self.build_folder, "lib", "libcudart_static.a"), join(self.build_folder, "lib", "libcudart.a"))
+                absolute_to_relative_symlinks(self, join(self.build_folder, "lib"))
 
     @property
     def _is_windows(self):
@@ -47,52 +69,30 @@ class CudaRtConan(ConanFile):
 
     def package(self):
         copy(self, "LICENSE", self.build_folder, join(self.package_folder, "licenses"))
-        copy(self, "*cu*", join(self.build_folder, "lib"), join(self.package_folder, "lib"))
-        dirs = ["bin", "include"]
-        for name in dirs:
-            if exists(join(self.build_folder, name)):
-                copy(self, "*", join(self.build_folder, name), join(self.package_folder, name))
+        copy(self, "*cudart*", join(self.build_folder, "lib"), join(self.package_folder, "lib"))
+        if self.options.shared:
+            copy(self, "*", join(self.build_folder, "bin"), join(self.package_folder, "bin"))
+
+        headers_runtime = ["*_types.h*", "*_interop.h*", "sm_*.h*", "*_functions.h*", "*_runtime*", "math_*", "*device_*", "cudart*", "host_*", "channel_*", "*_occupancy*"]
+        for headers in headers_runtime:
+            copy(self, headers, join(self.build_folder, "include"), join(self.package_folder, "include"))
         symlinks.absolute_to_relative_symlinks(self, self.package_folder)
 
     def package_info(self):
-        self.conf_info.append("tools.cmake.cmaketoolchain:user_toolchain", join(self.package_folder, "res", "cudart_toolchain.cmake"))
+        self.cpp_info.components["cudart_deps"].set_property("cmake_target_aliases", ["CUDA::cudart_static_deps"])
+        self.cpp_info.components["cudart_deps"].libdirs = []
+        self.cpp_info.components["cudart_deps"].bindirs = []
+        self.cpp_info.components["cudart_deps"].libs = []
+        if not self.options.shared and self.settings.os in ["Linux"]:
+            self.cpp_info.components["cudart_static_deps"].system_libs = ["pthread", "rt"]
 
-        requires = {
-            "cudart": "cudart_static",
-            "cudart_deps": "cudart_static_deps"
-        }
-        self.cpp_info.components["global"].requires = ["nvcrt::nvcrt"]
         # cudart libraries
-        self.cpp_info.components["cudart"].set_property("cmake_target_aliases", ["CUDA::cudart"])
+        self.cpp_info.components["cudart"].set_property("cmake_target_aliases", ["CUDA::cudart", "CUDA::cudart_static"])
         self.cpp_info.components["cudart"].libs = ["cudart"]
         self.cpp_info.components["cudart"].includedirs = ["include"]
-        if self.settings.os in ["Linux"]:
+        self.cpp_info.components["cudart"].requires = ["nvcrt::nvcrt", "cudart_deps"]
+        if self.options.shared and self.settings.os in ["Linux"]:
             self.cpp_info.components["cudart"].system_libs = ["dl"]
-
-        self.cpp_info.components["cudart_static_deps"].set_property("cmake_target_aliases", ["CUDA::cudart_static_deps"])
-        self.cpp_info.components["cudart_static_deps"].libdirs = []
-        self.cpp_info.components["cudart_static_deps"].bindirs = []
-        self.cpp_info.components["cudart_static_deps"].libs = []
-
-        # unix system_libs
-        if self.settings.os in ["Linux"]:
-            self.cpp_info.components["cudart_static_deps"].system_libs = ["pthread", "rt"]
-        self.cpp_info.components["cudart_static"].set_property("cmake_target_aliases", ["CUDA::cudart_static"])
-        self.cpp_info.components["cudart_static"].libs = ["cudart_static"]
-        self.cpp_info.components["cudart_static"].requires = ["cudart_static_deps"]
-        self.cpp_info.components["cudart_static"].includedirs = ["include"]
-
-        self.cpp_info.components["cuda_driver"].set_property("cmake_target_aliases", ["CUDA::cuda_driver", "CUDA::cuda"])
-        if not self._is_windows:
-            self.cpp_info.components["cuda_driver"].libdirs = ["lib/stubs"]
-        self.cpp_info.components["cuda_driver"].libs = ["cuda"]
-
-        self.cpp_info.components["cudadevrt"].set_property("cmake_target_aliases", ["CUDA::cudadevrt"])
-        self.cpp_info.components["cudadevrt"].libs = ["cudadevrt"]
-
-        self.cpp_info.components["culibos"].set_property("cmake_target_aliases", ["CUDA::culibos"])
-        if not self._is_windows:
-            self.cpp_info.components["culibos"].libs = ["culibos"]
 
         self.buildenv_info.define("cudart_PATH", self.package_folder)
         self.runenv_info.define("cudart_PATH", self.package_folder)

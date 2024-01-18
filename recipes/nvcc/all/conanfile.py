@@ -13,7 +13,7 @@ class NvccConan(ConanFile):
     description = "NVIDIA CUDA Compiler Driver NVCC"
     url = "https://github.com/conan-io/conan-center-index"
     homepage = "https://developer.nvidia.com/cuda-downloads"
-    license = "Nvidia CUDA Toolkit EULA"
+    license = ["Nvidia CUDA Toolkit EULA"]
     topics = ("nvcc", "compiler", "cuda", "nvidia", "pre-build")
     exports_sources = ["nvcc_toolchain.cmake"]
     package_type = "application"
@@ -58,7 +58,7 @@ class NvccConan(ConanFile):
         if self._is_windows:
             replace_in_file(self, nvcc_profile_path, "$(_WIN_PLATFORM_)", "")
             replace_in_file(self, nvcc_profile_path, "\"-I$(TOP)", "-Itest \"-I$(nvcrt_PATH)/include\" \"-I$(cudart_PATH)/include\" \"-I$(TOP)")
-            replace_in_file(self, nvcc_profile_path, "\"/LIBPATH:", "\"/LIBPATH:$(cudart_PATH)/lib\" \"/LIBPATH:")
+            replace_in_file(self, nvcc_profile_path, "\"/LIBPATH:", "\"/LIBPATH:$(cudart_PATH)/lib\" \"/LIBPATH:$(cudadevrt_PATH)/lib\" \"/LIBPATH:")
             major, minor = match(r"(\d+)\.(\d+)", self.version).groups()
             props_path = join(self.build_folder, "visual_studio_integration", "MSBuildExtensions", f"CUDA {major}.{minor}.props")
             replace_in_file(self, props_path,
@@ -75,11 +75,11 @@ class NvccConan(ConanFile):
                 r'''<AdditionalLibraryDirectories>$(nvcrt_PATH)/lib/crt</AdditionalLibraryDirectories>''')
             replace_in_file(self, props_path,
                 r'''<AdditionalLibraryDirectories>%(AdditionalLibraryDirectories);$(CudaToolkitLibDir)</AdditionalLibraryDirectories>''',
-                r'''<AdditionalLibraryDirectories>%(AdditionalLibraryDirectories);$(cudart_PATH)\\lib;$(CudaToolkitLibDir)</AdditionalLibraryDirectories>''')
+                r'''<AdditionalLibraryDirectories>%(AdditionalLibraryDirectories);$(cudart_PATH)\\lib;$(cudadevrt_PATH)\\lib;$(CudaToolkitLibDir)</AdditionalLibraryDirectories>''')
         else:
             replace_in_file(self, nvcc_profile_path, "$(_TARGET_SIZE_)", "")
             replace_in_file(self, nvcc_profile_path, "\"-I$(TOP)/$(_TARGET_DIR_)/include\"", "-Itest \"-I$(nvcrt_PATH)/include\" \"-I$(cudart_PATH)/include\"")
-            replace_in_file(self, nvcc_profile_path, "\"-L$(TOP)/$(_TARGET_DIR_)/lib/stubs\"", "\"-L$(TOP)/$(_TARGET_DIR_)/lib/stubs\" \"-L$(nvcrt_PATH)/lib/strubs\" \"-L$(cudart_PATH)/lib\"")
+            replace_in_file(self, nvcc_profile_path, "\"-L$(TOP)/$(_TARGET_DIR_)/lib/stubs\"", "\"-L$(TOP)/$(_TARGET_DIR_)/lib/stubs\" \"-L$(nvcrt_PATH)/lib/strubs\" \"-L$(cudadevrt_PATH)/lib\" \"-L$(cudart_PATH)/lib\"")
 
     def package(self):
         copy(self, "nvcc_toolchain.cmake", self.export_sources_folder, join(self.package_folder, "res"))
@@ -99,6 +99,7 @@ class NvccConan(ConanFile):
 
     def requirements(self):
         self.requires(f"cudart/{self.version}", visible=True)
+        self.requires(f"cudadevrt/{self.version}", visible=True)
 
     @property
     def _is_windows(self):

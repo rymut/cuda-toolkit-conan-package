@@ -1,0 +1,19 @@
+sources:
+  "12.3.103":
+    Windows:
+      x86_64:
+        url: "https://developer.download.nvidia.com/compute/cuda/redist/cuda_cudart/windows-x86_64/cuda_cudart-windows-x86_64-12.3.101-archive.zip"
+        sha256: "310a71bc9c92d6e61eeddf3489cc195519665fbfaca16c618b03da0ac5ea9f7d"
+    Linux:
+      x86_64:
+        url: "https://developer.download.nvidia.com/compute/cuda/redist/cuda_cudart/linux-x86_64/cuda_cudart-linux-x86_64-12.3.101-archive.tar.xz"
+        sha256: "e37d478d1e7a10490d55fb87a5ef379a18c648f3010e1d3687c4298ddc3e9e19"
+  "11.6.55":
+    Windows:
+      x86_64:
+        url: "https://developer.download.nvidia.com/compute/cuda/redist/cuda_cudart/windows-x86_64/cuda_cudart-windows-x86_64-11.6.55-archive.zip"
+        sha256: "d73be9aa0d66b282e94c75032763249a753efb9d63de891ae9a1c4a62ed1aca1"
+    Linux:
+      x86_64:
+        url: "https://developer.download.nvidia.com/compute/cuda/redist/cuda_cudart/linux-x86_64/cuda_cudart-linux-x86_64-11.6.55-archive.tar.xz"
+        sha256: "734a77b3a26a9d08489d43afb74bad230c7c4a0ed2d17a6317a47cf363dca521"

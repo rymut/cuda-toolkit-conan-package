@@ -11,7 +11,7 @@ class NvCrtConan(ConanFile):
     description = "NVIDIA CUDA Compiler Common Runtime"
     url = "https://github.com/conan-io/conan-center-index"
     homepage = "https://developer.nvidia.com/cuda-downloads"
-    license = "Nvidia CUDA Toolkit EULA"
+    license = ["Nvidia CUDA Toolkit EULA"]
     topics = ("nvcc", "crt", "cuda", "nvidia", "pre-build")
     package_type = "header-library"
     settings = "os", "arch", "compiler", "build_type"
