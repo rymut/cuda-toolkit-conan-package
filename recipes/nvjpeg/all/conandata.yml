@@ -1,0 +1,10 @@
+sources:
+  "12.3.0.81":
+    Windows:
+      x86_64:
+        - url: https://developer.download.nvidia.com/compute/cuda/redist/libnvjpeg/windows-x86_64/libnvjpeg-windows-x86_64-12.3.0.81-archive.zip
+          sha256: 6cd5fc8ae477ea67c6d11f6c9d04fcf382e43378ee774b8a52b94ac68ee68b8c
+    Linux:
+      x86_64:
+        - url: https://developer.download.nvidia.com/compute/cuda/redist/libnvjpeg/linux-x86_64/libnvjpeg-linux-x86_64-12.3.0.81-archive.tar.xz
+          sha256: 2ab40ef82d528b0ccdf5326754915f8d89991360d57ca56c58ff1c25c65c2236
