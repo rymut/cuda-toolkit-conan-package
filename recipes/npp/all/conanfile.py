@@ -94,14 +94,15 @@ class NppConan(ConanFile):
         }
         self.cpp_info.components["nppc"].set_property("cmake_target_aliases", ["CUDA::nppc", "CUDA::nppc_static"])
         if self.options.shared:
-            self.cpp_info.components["nppc"].requires += ["nppc"]
+            self.cpp_info.components["nppc"].libs += ["nppc"]
         else:
-            self.cpp_info.components["nppc"].requires += ["nppc_static"]
+            self.cpp_info.components["nppc"].libs += ["nppc_static"]
+            self.cpp_info.components["nppc"].requires = ["culibos::culibos"]
         self.cpp_info.components["global"].bindirs = ["bin"] if self._is_windows else ["lib"]
         for name in ["nppial", "nppicc", "nppidei", "nppif", "nppig", "nppim", "nppist", "nppitc", "npps", "nppicom", "nppisu"]:
             self.cpp_info.components[name].set_property("cmake_target_aliases", [f"CUDA::{name}", f"CUDA::{name}_static"])
             if not self.options.shared:
-                self.cpp_info.components[name].requires += ["nppc", "culibos::culibos"]
+                self.cpp_info.components[name].requires += ["nppc"]
                 self.cpp_info.components[name].libs = [f"{name}_static"]
             else:
                 self.cpp_info.components[name].requires += ["nppc"]
