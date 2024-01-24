@@ -1,0 +1,10 @@
+sources:
+  "10.3.4.101":
+    Windows:
+      x86_64:
+        - url: https://developer.download.nvidia.com/compute/cuda/redist/libcurand/windows-x86_64/libcurand-windows-x86_64-10.3.4.101-archive.zip
+          sha256: 9f91838c47686e9510d71b05b61661d9026292fabbf7481c6d0aa56dc46a4b61
+    Linux:
+      x86_64:
+        - url: https://developer.download.nvidia.com/compute/cuda/redist/libcurand/linux-x86_64/libcurand-linux-x86_64-10.3.4.101-archive.tar.xz
+          sha256: 5cae43cdab5a39dc9c31ecdec4765cc47aa3c097eb49c3b4ebe15a9fa2a81a73
